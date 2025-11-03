@@ -1,0 +1,9 @@
+# Buildpack configuration
+# Cloud Build will use buildpacks instead of Dockerfile
+
+# Use Google's buildpack builder
+builder = "gcr.io/buildpacks/builder:google-22"
+
+# Build directory
+build_dir = "backend"
+

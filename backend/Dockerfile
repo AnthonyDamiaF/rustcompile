@@ -22,12 +22,13 @@ RUN cargo build --release
 RUN ldd /usr/src/app/target/release/test-backend || true
 
 # Stage 2: Runtime
-FROM debian:bullseye-slim
+# Use bookworm (newer) to match rust:latest GLIBC version
+FROM debian:bookworm-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    libssl1.1 \
+    libssl3 \
     libc6 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -48,5 +49,7 @@ ENV PORT=8080
 
 # Run the compiled binary directly
 # The binary will read PORT from environment variable
+# Use exec form to ensure proper signal handling
 CMD ["./test-backend"]
+
 

@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_NAME="test-backend"
 PORT=8080
 
-echo "🛑 Stopping $SERVER_NAME server..."
+echo "🛑 Stopping $SERVER_NAME server...."
 
 # First, check for processes using the port (more reliable)
 PORT_PID=$(lsof -ti:$PORT 2>/dev/null || true)
