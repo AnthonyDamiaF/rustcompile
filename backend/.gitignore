@@ -1,5 +1,6 @@
 target/
-Cargo.lock
 .env
 *.log
+
+# Note: Cargo.lock IS committed for applications (not ignored)
 
