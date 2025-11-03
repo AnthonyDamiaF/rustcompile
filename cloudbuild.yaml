@@ -1,0 +1,29 @@
+steps:
+  # Build the Docker image using the Dockerfile
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'backend/Dockerfile'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/rustcompile:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/rustcompile:latest'
+      - 'backend'
+
+# Store images in Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/rustcompile:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/rustcompile:latest'
+
+# Build options
+options:
+  # Use the Cloud Storage bucket for logs
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'N1_HIGHCPU_8'
+
+# Specify logs bucket
+logsBucket: 'gs://projecttrade_471406_cloud_storage_bucket'
+
+timeout: '1200s'
+
