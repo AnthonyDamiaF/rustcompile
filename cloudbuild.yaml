@@ -1,19 +1,15 @@
 steps:
-  # Build using buildpacks (alternative to Dockerfile)
-  # Note: Buildpacks for Rust may require additional configuration
-  - name: "gcr.io/k8s-skaffold/pack"
-    entrypoint: "pack"
+  # Build using Dockerfile (fixed GLIBC version mismatch)
+  - name: "gcr.io/cloud-builders/docker"
     args:
       - "build"
+      - "-t"
       - "gcr.io/projecttrade-471406/rustcompile:$COMMIT_SHA"
-      - "--builder"
-      - "gcr.io/buildpacks/builder:google-22"
-      - "--path"
+      - "-t"
+      - "gcr.io/projecttrade-471406/rustcompile:latest"
+      - "-f"
+      - "backend/Dockerfile"
       - "backend"
-      - "--env"
-      - "GOOGLE_BUILDABLE=backend"
-      - "--env"
-      - "PORT=8080"
 
 # Store images in Container Registry
 images:
