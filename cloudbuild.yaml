@@ -19,7 +19,8 @@ images:
 # Build options
 options:
   # Use the Cloud Storage bucket for logs (don't use CLOUD_LOGGING_ONLY with logsBucket)
-  machineType: "N1_HIGHCPU_8"
+  # Use E2 machine type as N1 is not available in this region
+  machineType: "E2_HIGHCPU_8"
 
 # Specify logs bucket - this will use the bucket for logs
 logsBucket: "gs://projecttrade_471406_cloud_storage_bucket"
