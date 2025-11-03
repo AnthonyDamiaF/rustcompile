@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -128,15 +129,18 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Hello World!</h1>
         <p class="subtitle">Rust Backend Test Application</p>
-        
+
         <div class="status-box">
             <div class="status-item">
                 <span class="status-label">Backend Status</span>
@@ -169,11 +173,11 @@
             const statusEl = document.getElementById('backend-status');
             statusEl.textContent = 'Testing...';
             statusEl.className = 'status-value status-loading';
-            
+
             try {
                 const response = await fetch(`${API_BASE}/hello`);
                 const data = await response.json();
-                
+
                 statusEl.textContent = 'Connected ✓';
                 statusEl.className = 'status-value status-ok';
                 alert('Backend Response: ' + JSON.stringify(data, null, 2));
@@ -188,11 +192,11 @@
             const statusEl = document.getElementById('db-status');
             statusEl.textContent = 'Testing...';
             statusEl.className = 'status-value status-loading';
-            
+
             try {
                 const response = await fetch(`${API_BASE}/api/db-test`);
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     statusEl.textContent = 'Connected ✓';
                     statusEl.className = 'status-value status-ok';
@@ -216,5 +220,5 @@
         });
     </script>
 </body>
-</html>
 
+</html>
