@@ -3,19 +3,13 @@ FROM rust:latest AS builder
 
 WORKDIR /usr/src/app
 
-# Create empty project
-RUN cargo init --bin .
-
-# Copy manifests
+# Copy manifests first (for dependency caching)
 COPY ./Cargo.toml ./Cargo.lock ./
 
-# Build dependencies (cached)
-RUN cargo build --release
-
-# Copy source
+# Copy source code
 COPY ./src ./src
 
-# Build application
+# Build the application
 RUN cargo build --release
 
 # Check libraries
