@@ -28,7 +28,7 @@ async fn hello() -> HttpResponse {
     }))
 }
 
-// Database test endpoint
+// Database test endpoint (with pool)
 async fn db_test(pool: web::Data<sqlx::PgPool>) -> HttpResponse {
     match sqlx::query("SELECT 1 as test")
         .execute(pool.get_ref())
@@ -41,10 +41,19 @@ async fn db_test(pool: web::Data<sqlx::PgPool>) -> HttpResponse {
         })),
         Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
             "status": "error",
-            "message": "Database connection failed",
+            "message": "Database query failed",
             "error": e.to_string()
         })),
     }
+}
+
+// Database test endpoint (without pool - fallback)
+async fn db_test_no_db() -> HttpResponse {
+    HttpResponse::ServiceUnavailable().json(serde_json::json!({
+        "status": "error",
+        "message": "Database connection not available",
+        "error": "Database was not connected during startup"
+    }))
 }
 
 // URL encoding helper (same as main app)
@@ -140,35 +149,32 @@ async fn main() -> std::io::Result<()> {
     println!("📊 Attempting database connection with 5s timeout...");
     std::io::stdout().flush().ok();
     
-    // Attempt database connection with timeout
-    let pool = match tokio::time::timeout(
+    // Attempt database connection with timeout (non-blocking)
+    // Allow server to start even if DB connection fails
+    let pool_result = tokio::time::timeout(
         std::time::Duration::from_secs(5),
         connect_db(&database_url)
-    ).await {
+    ).await;
+    
+    let pool = match pool_result {
         Ok(Ok(pool)) => {
             println!("✅ Database connected successfully");
             std::io::stdout().flush().ok();
-            pool
+            Some(pool)
         }
         Ok(Err(e)) => {
-            eprintln!("❌ Database connection failed: {}", e);
-            eprintln!("⚠️  Continuing without database connection for testing...");
+            eprintln!("⚠️  Database connection failed: {}", e);
+            eprintln!("⚠️  Server will start without database connection");
+            eprintln!("⚠️  /api/db-test endpoint will not be available");
             std::io::stdout().flush().ok();
-            // For testing purposes, we'll allow the server to start even if DB fails
-            // In production, you might want to return an error here
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::ConnectionRefused,
-                format!("Database connection failed: {}. Please check your database configuration.", e)
-            ));
+            None
         }
         Err(_) => {
-            eprintln!("❌ Database connection timed out after 5 seconds");
-            eprintln!("⚠️  Continuing without database connection for testing...");
+            eprintln!("⚠️  Database connection timed out after 5 seconds");
+            eprintln!("⚠️  Server will start without database connection");
+            eprintln!("⚠️  /api/db-test endpoint will not be available");
             std::io::stdout().flush().ok();
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::TimedOut,
-                "Database connection timeout. Please check your database configuration."
-            ));
+            None
         }
     };
     
@@ -183,6 +189,8 @@ async fn main() -> std::io::Result<()> {
     println!("🌐 Frontend origin: {}", frontend_origin);
     std::io::stdout().flush().ok();
     
+    // Move pool into the closure properly
+    let pool_opt = pool;
     HttpServer::new(move || {
         // Allow all localhost origins for development (more permissive)
         let cors = Cors::default()
@@ -207,13 +215,23 @@ async fn main() -> std::io::Result<()> {
             .supports_credentials()
             .max_age(3600);
         
-        App::new()
+        let mut app = App::new()
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .app_data(web::Data::new(pool.clone()))
             .route("/health", web::get().to(health_check))
-            .route("/hello", web::get().to(hello))
-            .route("/api/db-test", web::get().to(db_test))
+            .route("/hello", web::get().to(hello));
+        
+        // Only add database pool if connection was successful
+        if let Some(ref p) = pool_opt {
+            let pool_clone = p.clone();
+            app = app.app_data(web::Data::new(pool_clone))
+                .route("/api/db-test", web::get().to(db_test));
+        } else {
+            // Add route without pool - will return error message
+            app = app.route("/api/db-test", web::get().to(db_test_no_db));
+        }
+        
+        app
     })
     .bind(("0.0.0.0", port))
     .map_err(|e| {
