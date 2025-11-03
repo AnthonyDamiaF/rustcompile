@@ -18,11 +18,10 @@ images:
 
 # Build options
 options:
-  # Use the Cloud Storage bucket for logs
-  logging: CLOUD_LOGGING_ONLY
+  # Use the Cloud Storage bucket for logs (don't use CLOUD_LOGGING_ONLY with logsBucket)
   machineType: "N1_HIGHCPU_8"
 
-# Specify logs bucket
+# Specify logs bucket - this will use the bucket for logs
 logsBucket: "gs://projecttrade_471406_cloud_storage_bucket"
 
 timeout: "1200s"
